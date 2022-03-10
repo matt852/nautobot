@@ -154,6 +154,9 @@ class RouteTargetForm(NautobotModelForm, TenancyForm):
             "tenant",
             "tags",
         ]
+        widgets = {
+            "name": forms.TextInput(attrs={"autofocus": True, "placeholder": "Name"}),
+        }
 
 
 class RouteTargetCSVForm(CustomFieldModelCSVForm):

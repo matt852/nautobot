@@ -257,6 +257,7 @@ class ClusterRemoveDevicesForm(ConfirmationForm):
 
 
 class VirtualMachineForm(NautobotModelForm, TenancyForm, LocalContextModelForm):
+    name = forms.CharField(max_length=64, widget=forms.TextInput(attrs={"autofocus": True, "placeholder": "Name"}))
     cluster_group = DynamicModelChoiceField(
         queryset=ClusterGroup.objects.all(),
         required=False,
@@ -530,7 +531,9 @@ class VMInterfaceForm(NautobotModelForm, InterfaceCommonForm):
 
 class VMInterfaceCreateForm(BootstrapMixin, InterfaceCommonForm):
     virtual_machine = DynamicModelChoiceField(queryset=VirtualMachine.objects.all())
-    name_pattern = ExpandableNameField(label="Name")
+    name_pattern = ExpandableNameField(
+        label="Name", widget=forms.TextInput(attrs={"autofocus": True, "placeholder": "Name"})
+    )
     enabled = forms.BooleanField(required=False, initial=True)
     mtu = forms.IntegerField(
         required=False,

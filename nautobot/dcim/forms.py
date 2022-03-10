@@ -193,7 +193,9 @@ class ComponentForm(BootstrapMixin, forms.Form):
     a name pattern.
     """
 
-    name_pattern = ExpandableNameField(label="Name")
+    name_pattern = ExpandableNameField(
+        label="Name", widget=forms.TextInput(attrs={"autofocus": True, "placeholder": "Name"})
+    )
     label_pattern = ExpandableNameField(
         label="Label",
         required=False,
@@ -885,6 +887,7 @@ class DeviceTypeForm(NautobotModelForm):
             "rear_image": forms.ClearableFileInput(
                 attrs={"accept": "image/bmp,image/gif,image/jpeg,image/png,image/tiff"}
             ),
+            "model": forms.TextInput(attrs={"autofocus": True, "placeholder": "Model"}),
         }
 
 
@@ -1742,6 +1745,7 @@ class DeviceForm(NautobotModelForm, TenancyForm, LocalContextModelForm):
             "face": StaticSelect2(),
             "primary_ip4": StaticSelect2(),
             "primary_ip6": StaticSelect2(),
+            "name": forms.TextInput(attrs={"autofocus": True, "placeholder": "Name"}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -3832,6 +3836,9 @@ class VirtualChassisCreateForm(NautobotModelForm):
             "initial_position",
             "tags",
         ]
+        widgets = {
+            "name": forms.TextInput(attrs={"autofocus": True, "placeholder": "Name"}),
+        }
 
     def save(self, *args, **kwargs):
         instance = super().save(*args, **kwargs)

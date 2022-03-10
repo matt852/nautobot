@@ -222,6 +222,7 @@ class CircuitForm(NautobotModelForm, TenancyForm):
         }
         widgets = {
             "install_date": DatePicker(),
+            "cid": forms.TextInput(attrs={"autofocus": True, "placeholder": "Circuit ID"}),
         }
 
 

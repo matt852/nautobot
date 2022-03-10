@@ -688,7 +688,10 @@ class NautobotModelForm(BootstrapMixin, CustomFieldModelForm, RelationshipModelF
     the codebase where all three of BootstrapMixin, CustomFieldModelForm and RelationshipModelForm are needed.
     """
 
-    pass
+    class Meta:
+        widgets = {
+            "name": forms.TextInput(attrs={"autofocus": True, "placeholder": "Name"}),
+        }
 
 
 class PasswordInputWithPlaceholder(forms.PasswordInput):

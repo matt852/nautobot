@@ -27,6 +27,11 @@ class AddressFieldMixin(forms.ModelForm):
 
     address = IPNetworkFormField()
 
+    class Meta:
+        widgets = {
+            "prefix": forms.TextInput(attrs={"autofocus": True}),
+        }
+
     def __init__(self, *args, **kwargs):
 
         instance = kwargs.get("instance")
@@ -146,6 +151,11 @@ class PrefixFieldMixin(forms.ModelForm):
     """
 
     prefix = IPNetworkFormField()
+
+    class Meta:
+        widgets = {
+            "prefix": forms.TextInput(attrs={"autofocus": True}),
+        }
 
     def __init__(self, *args, **kwargs):
 
