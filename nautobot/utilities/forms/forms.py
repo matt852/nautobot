@@ -25,12 +25,7 @@ class AddressFieldMixin(forms.ModelForm):
     ModelForm mixin for IPAddress based models.
     """
 
-    address = IPNetworkFormField()
-
-    class Meta:
-        widgets = {
-            "prefix": forms.TextInput(attrs={"autofocus": True}),
-        }
+    address = IPNetworkFormField(widget=forms.TextInput(attrs={"autofocus": True}))
 
     def __init__(self, *args, **kwargs):
 
@@ -150,7 +145,7 @@ class PrefixFieldMixin(forms.ModelForm):
     ModelForm mixin for IPNetwork based models.
     """
 
-    prefix = IPNetworkFormField()
+    prefix = IPNetworkFormField(widget=forms.TextInput(attrs={"autofocus": True}))
 
     def __init__(self, *args, **kwargs):
 

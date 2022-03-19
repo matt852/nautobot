@@ -1080,6 +1080,9 @@ class VLANForm(NautobotModelForm, TenancyForm):
             "status": "Operational status of this VLAN",
             "role": "The primary function of this VLAN",
         }
+        widgets = {
+            "vid": forms.TextInput(attrs={"autofocus": True, "placeholder": "ID"}),
+        }
 
 
 class VLANCSVForm(StatusModelCSVFormMixin, CustomFieldModelCSVForm):
