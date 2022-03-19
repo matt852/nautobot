@@ -94,6 +94,9 @@ class VRFForm(NautobotModelForm, TenancyForm):
         help_texts = {
             "rd": "Route distinguisher in any format",
         }
+        widgets = {
+            "name": forms.TextInput(attrs={"autofocus": True, "placeholder": "Name"}),
+        }
 
 
 class VRFCSVForm(CustomFieldModelCSVForm):
@@ -220,6 +223,9 @@ class RIRForm(NautobotModelForm):
             "is_private",
             "description",
         ]
+        widgets = {
+            "name": forms.TextInput(attrs={"autofocus": True, "placeholder": "Name"}),
+        }
 
 
 class RIRCSVForm(CustomFieldModelCSVForm):
@@ -334,6 +340,9 @@ class RoleForm(NautobotModelForm):
             "weight",
             "description",
         ]
+        widgets = {
+            "name": forms.TextInput(attrs={"autofocus": True}),
+        }
 
 
 class RoleCSVForm(CustomFieldModelCSVForm):
@@ -998,6 +1007,9 @@ class VLANGroupForm(NautobotModelForm):
             "slug",
             "description",
         ]
+        widgets = {
+            "name": forms.TextInput(attrs={"autofocus": True, "placeholder": "Name"}),
+        }
 
 
 class VLANGroupCSVForm(CustomFieldModelCSVForm):

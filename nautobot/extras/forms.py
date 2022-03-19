@@ -294,6 +294,9 @@ class ComputedFieldForm(BootstrapMixin, forms.ModelForm):
             "weight",
             "advanced_ui",
         )
+        widgets = {
+            "label": forms.TextInput(attrs={"autofocus": True, "placeholder": "Label"}),
+        }
 
 
 class ComputedFieldFilterForm(BootstrapMixin, forms.Form):
@@ -344,6 +347,9 @@ class ConfigContextForm(BootstrapMixin, forms.ModelForm):
             "tags",
             "data",
         )
+        widgets = {
+            "name": forms.TextInput(attrs={"autofocus": True, "placeholder": "Name"}),
+        }
 
 
 class ConfigContextBulkEditForm(BootstrapMixin, BulkEditForm):
@@ -433,6 +439,9 @@ class ConfigContextSchemaForm(BootstrapMixin, forms.ModelForm):
             "description",
             "data_schema",
         )
+        widgets = {
+            "name": forms.TextInput(attrs={"autofocus": True, "placeholder": "Name"}),
+        }
 
 
 class ConfigContextSchemaBulkEditForm(BootstrapMixin, BulkEditForm):
@@ -501,6 +510,9 @@ class CustomFieldForm(BootstrapMixin, forms.ModelForm):
             "validation_maximum",
             "validation_regex",
         )
+        widgets = {
+            "name": forms.TextInput(attrs={"autofocus": True, "placeholder": "Slug"}),
+        }
 
 
 class CustomFieldModelForm(forms.ModelForm):
@@ -624,6 +636,9 @@ class CustomLinkForm(BootstrapMixin, forms.ModelForm):
             "button_class",
             "new_window",
         )
+        widgets = {
+            "name": forms.TextInput(attrs={"autofocus": True, "placeholder": "Name"}),
+        }
 
 
 class CustomLinkFilterForm(BootstrapMixin, forms.Form):
@@ -659,6 +674,9 @@ class ExportTemplateForm(BootstrapMixin, forms.ModelForm):
             "mime_type",
             "file_extension",
         )
+        widgets = {
+            "name": forms.TextInput(attrs={"autofocus": True, "placeholder": "Name"}),
+        }
 
 
 class ExportTemplateFilterForm(BootstrapMixin, forms.Form):
@@ -688,10 +706,7 @@ class NautobotModelForm(BootstrapMixin, CustomFieldModelForm, RelationshipModelF
     the codebase where all three of BootstrapMixin, CustomFieldModelForm and RelationshipModelForm are needed.
     """
 
-    class Meta:
-        widgets = {
-            "name": forms.TextInput(attrs={"autofocus": True, "placeholder": "Name"}),
-        }
+    pass
 
 
 class PasswordInputWithPlaceholder(forms.PasswordInput):
@@ -755,6 +770,9 @@ class GitRepositoryForm(BootstrapMixin, RelationshipModelForm):
             "provided_contents",
             "tags",
         ]
+        widgets = {
+            "name": forms.TextInput(attrs={"autofocus": True, "placeholder": "Name"}),
+        }
 
     def clean(self):
         super().clean()
@@ -835,6 +853,9 @@ class GraphQLQueryForm(BootstrapMixin, forms.ModelForm):
             "slug",
             "query",
         )
+        widgets = {
+            "name": forms.TextInput(attrs={"autofocus": True, "placeholder": "Name"}),
+        }
 
     def get_action_url(self):
         return reverse("extras:graphqlquery_add")
@@ -1105,6 +1126,9 @@ class RelationshipForm(BootstrapMixin, forms.ModelForm):
             "destination_hidden",
             "destination_filter",
         ]
+        widgets = {
+            "name": forms.TextInput(attrs={"autofocus": True, "placeholder": "Name"}),
+        }
 
     def save(self, commit=True):
 
@@ -1176,6 +1200,9 @@ class SecretForm(NautobotModelForm):
             "parameters",
             "tags",
         ]
+        widgets = {
+            "name": forms.TextInput(attrs={"autofocus": True, "placeholder": "Name"}),
+        }
 
 
 class SecretCSVForm(CustomFieldModelCSVForm):
@@ -1223,6 +1250,9 @@ class SecretsGroupForm(NautobotModelForm):
             "slug",
             "description",
         ]
+        widgets = {
+            "name": forms.TextInput(attrs={"autofocus": True, "placeholder": "Name"}),
+        }
 
 
 class SecretsGroupFilterForm(BootstrapMixin, CustomFieldFilterForm):
@@ -1243,7 +1273,10 @@ class StatusForm(NautobotModelForm):
 
     class Meta:
         model = Status
-        widgets = {"color": ColorSelect()}
+        widgets = {
+            "name": forms.TextInput(attrs={"autofocus": True, "placeholder": "Name"}),
+            "color": ColorSelect(),
+        }
         fields = ["name", "slug", "description", "content_types", "color"]
 
 
@@ -1341,6 +1374,9 @@ class TagForm(NautobotModelForm):
     class Meta:
         model = Tag
         fields = ["name", "slug", "color", "description"]
+        widgets = {
+            "name": forms.TextInput(attrs={"autofocus": True, "placeholder": "Name"}),
+        }
 
 
 class TagCSVForm(CustomFieldModelCSVForm):
@@ -1403,6 +1439,9 @@ class WebhookForm(BootstrapMixin, forms.ModelForm):
             "ssl_verification",
             "ca_file_path",
         )
+        widgets = {
+            "name": forms.TextInput(attrs={"autofocus": True, "placeholder": "Name"}),
+        }
 
 
 class WebhookFilterForm(BootstrapMixin, forms.Form):

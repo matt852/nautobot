@@ -61,6 +61,9 @@ class ClusterTypeForm(NautobotModelForm):
             "slug",
             "description",
         ]
+        widgets = {
+            "name": forms.TextInput(attrs={"autofocus": True, "placeholder": "Name"}),
+        }
 
 
 class ClusterTypeCSVForm(CustomFieldModelCSVForm):
@@ -84,6 +87,9 @@ class ClusterGroupForm(NautobotModelForm):
             "slug",
             "description",
         ]
+        widgets = {
+            "name": forms.TextInput(attrs={"autofocus": True, "placeholder": "Name"}),
+        }
 
 
 class ClusterGroupCSVForm(CustomFieldModelCSVForm):
@@ -121,6 +127,9 @@ class ClusterForm(NautobotModelForm, TenancyForm):
             "comments",
             "tags",
         )
+        widgets = {
+            "name": forms.TextInput(attrs={"autofocus": True, "placeholder": "Name"}),
+        }
 
 
 class ClusterCSVForm(CustomFieldModelCSVForm):

@@ -55,6 +55,7 @@ class ProviderForm(NautobotModelForm):
         widgets = {
             "noc_contact": SmallTextarea(attrs={"rows": 5}),
             "admin_contact": SmallTextarea(attrs={"rows": 5}),
+            "name": forms.TextInput(attrs={"autofocus": True, "placeholder": "Name"}),
         }
         help_texts = {
             "name": "Full name of the provider",
@@ -127,6 +128,9 @@ class ProviderNetworkForm(BootstrapMixin, CustomFieldModelForm):
             "tags",
         ]
         fieldsets = (("Provider Network", ("provider", "name", "slug", "description", "comments", "tags")),)
+        widgets = {
+            "name": forms.TextInput(attrs={"autofocus": True, "placeholder": "Name"}),
+        }
 
 
 class ProviderNetworkCSVForm(CustomFieldModelCSVForm):
@@ -179,6 +183,9 @@ class CircuitTypeForm(NautobotModelForm):
             "slug",
             "description",
         ]
+        widgets = {
+            "name": forms.TextInput(attrs={"autofocus": True, "placeholder": "Name"}),
+        }
 
 
 class CircuitTypeCSVForm(CustomFieldModelCSVForm):

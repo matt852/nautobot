@@ -259,6 +259,9 @@ class RegionForm(NautobotModelForm):
             "slug",
             "description",
         )
+        widgets = {
+            "name": forms.TextInput(attrs={"autofocus": True, "placeholder": "Name"}),
+        }
 
 
 class RegionCSVForm(CustomFieldModelCSVForm):
@@ -314,6 +317,7 @@ class SiteForm(NautobotModelForm, TenancyForm):
             "tags",
         ]
         widgets = {
+            "name": forms.TextInput(attrs={"autofocus": True, "placeholder": "Name"}),
             "physical_address": SmallTextarea(
                 attrs={
                     "rows": 3,
@@ -418,6 +422,9 @@ class RackGroupForm(NautobotModelForm):
             "slug",
             "description",
         )
+        widgets = {
+            "name": forms.TextInput(attrs={"autofocus": True, "placeholder": "Name"}),
+        }
 
 
 class RackGroupCSVForm(CustomFieldModelCSVForm):
@@ -473,6 +480,9 @@ class RackRoleForm(NautobotModelForm):
             "color",
             "description",
         ]
+        widgets = {
+            "name": forms.TextInput(attrs={"autofocus": True, "placeholder": "Name"}),
+        }
 
 
 class RackRoleCSVForm(CustomFieldModelCSVForm):
@@ -532,6 +542,7 @@ class RackForm(NautobotModelForm, TenancyForm):
             "u_height": "Height in rack units",
         }
         widgets = {
+            "name": forms.TextInput(attrs={"autofocus": True, "placeholder": "Name"}),
             "type": StaticSelect2(),
             "width": StaticSelect2(),
             "outer_unit": StaticSelect2(),
@@ -844,6 +855,9 @@ class ManufacturerForm(NautobotModelForm):
             "slug",
             "description",
         ]
+        widgets = {
+            "name": forms.TextInput(attrs={"autofocus": True, "placeholder": "Name"}),
+        }
 
 
 class ManufacturerCSVForm(CustomFieldModelCSVForm):
@@ -1598,6 +1612,9 @@ class DeviceRoleForm(NautobotModelForm):
             "vm_role",
             "description",
         ]
+        widgets = {
+            "name": forms.TextInput(attrs={"autofocus": True, "placeholder": "Name"}),
+        }
 
 
 class DeviceRoleCSVForm(CustomFieldModelCSVForm):
@@ -1629,6 +1646,7 @@ class PlatformForm(NautobotModelForm):
             "description",
         ]
         widgets = {
+            "name": forms.TextInput(attrs={"autofocus": True, "placeholder": "Name"}),
             "napalm_args": SmallTextarea(),
         }
 
@@ -4031,6 +4049,9 @@ class PowerPanelForm(NautobotModelForm):
             "name",
             "tags",
         ]
+        widgets = {
+            "name": forms.TextInput(attrs={"autofocus": True, "placeholder": "Name"}),
+        }
 
 
 class PowerPanelCSVForm(CustomFieldModelCSVForm):
@@ -4141,6 +4162,7 @@ class PowerFeedForm(NautobotModelForm):
             "type": StaticSelect2(),
             "supply": StaticSelect2(),
             "phase": StaticSelect2(),
+            "name": forms.TextInput(attrs={"autofocus": True, "placeholder": "Name"}),
         }
 
 
