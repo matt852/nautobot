@@ -262,39 +262,43 @@ class JobTest(TransactionTestCase):
         """
         Test that Object variable fields behave as expected.
         """
-        module = "test_object_vars"
-        name = "TestObjectVars"
-        job_class = get_job(f"local/{module}/{name}")
+        with self.settings(JOBS_ROOT=os.path.join(settings.BASE_DIR, "extras/tests/dummy_jobs")):
 
-        d = DeviceRole.objects.create(name="role", slug="role")
+            module = "test_object_vars"
+            name = "TestObjectVars"
+            job_class = get_job(f"local/{module}/{name}")
 
-        # Prepare the job data
-        job_result = JobResult.objects.create(
-            name=job_class.class_path,
-            obj_type=self.job_content_type,
-            user=None,
-            job_id=uuid.uuid4(),
-        )
-        data = {
-            "role": {"name": "role"},
-            "roles": [d.pk],
-        }
+            d = DeviceRole.objects.create(name="role", slug="role")
 
-        # Run the job and extract the job payload data
-        run_job(data=data, request=self.request, commit=False, job_result_pk=job_result.pk)
-        job_result.refresh_from_db()
-        # Test storing additional data in job
-        job_result_data = job_result.data["object_vars"]
+            # Prepare the job data
+            job_result = JobResult.objects.create(
+                name=job_class.class_path,
+                obj_type=self.job_content_type,
+                user=None,
+                job_id=uuid.uuid4(),
+            )
+            data = {
+                "role": {"name": "role"},
+                "roles": [d.pk],
+            }
 
-        info_log = JobLogEntry.objects.filter(
-            job_result=job_result, log_level=LogLevelChoices.LOG_INFO, grouping="run"
-        ).first()
+            # Run the job and extract the job payload data
+            # See test_ip_address_vars as to why we are changing commit=True and request=self.request.
+            run_job(data=data, request=self.request, commit=True, job_result_pk=job_result.pk)
+            job_result.refresh_from_db()
+            # Test storing additional data in job
+            job_result_data = job_result.data["object_vars"]
 
-        # Assert stuff
-        self.assertEqual(job_result.status, JobResultStatusChoices.STATUS_COMPLETED)
-        self.assertEqual({"role": str(d.pk), "roles": [str(d.pk)]}, job_result_data)
-        self.assertEqual(info_log.log_object, "Role: role")
-        self.assertEqual(job_result.data["output"], "\nNice Roles, bro.")
+            info_log = JobLogEntry.objects.filter(
+                job_result=job_result, log_level=LogLevelChoices.LOG_INFO, grouping="run"
+            ).first()
+
+            # Assert stuff
+            self.assertEqual(job_result.status, JobResultStatusChoices.STATUS_COMPLETED)
+            self.assertEqual({"role": str(d.pk), "roles": [str(d.pk)]}, job_result_data)
+            self.assertEqual(info_log.log_object, None)
+            self.assertEqual(info_log.message, "Role: role")
+            self.assertEqual(job_result.data["output"], "\nNice Roles!")
 
     def test_optional_object_var(self):
         """

@@ -19,26 +19,26 @@ menu_tabs = (
         name="Circuits",
         groups=(
             NavMenuGroup(
-                name="Example Circuit Group",
+                name="Dummy Circuit Group",
                 weight=150,
                 items=(
                     NavMenuItem(
-                        link="plugins:example_plugin:examplemodel_list",
-                        name="Example Model",
+                        link="plugins:dummy_plugin:dummymodel_list",
+                        name="Dummy Model",
                         permissions=[
-                            "example_plugin.view_examplemodel"
+                            "dummy_plugin.view_dummymodel"
                         ],
                         buttons=(
                             NavMenuAddButton(
-                                link="plugins:example_plugin:examplemodel_add",
+                                link="plugins:dummy_plugin:dummymodel_add",
                                 permissions=[
-                                    "example_plugin.add_examplemodel",
+                                    "dummy_plugin.add_dummymodel",
                                 ],
                             ),
                             NavMenuImportButton(
-                                link="plugins:example_plugin:examplemodel_import",
+                                link="plugins:dummy_plugin:dummymodel_import",
                                 permissions=[
-                                    "example_plugin.add_examplemodel"
+                                    "dummy_plugin.add_dummymodel"
                                 ],
                             ),
                         ),
@@ -56,37 +56,37 @@ The code below shows how to add a new tab to the navbar. A tab is defined by a `
 
 The position in the navigation menu is defined by the weight. The lower the weight the closer to the start of the menus the object will be. All core objects have weights in multiples of 100, meaning there is plenty of space around the objects for plugins to customize.
 
-Below you can see `Example Tab` has a weight value of `150`. This means the tab will appear between `Organization` and `Devices`.
+Below you can see `Dummy Tab` has a weight value of `150`. This means the tab will appear between `Organization` and `Devices`.
 
 ``` python
 from nautobot.core.apps import NavMenuAddButton, NavMenuGroup, NavMenuItem, NavMenuImportButton, NavMenuTab
 
 menu_items = (
     NavMenuTab(
-        name="Example Tab",
+        name="Dummy Tab",
         weight=150,
         groups=(
             NavMenuGroup(
-                name="Example Group 1",
+                name="Dummy Group 1",
                 weight=100,
                 items=(
                     NavMenuItem(
-                        link="plugins:example_plugin:examplemodel_list",
-                        link_text="Example Model",
+                        link="plugins:dummy_plugin:dummymodel_list",
+                        name="Dummy Model",
                         permissions=[
-                            "example_plugin.view_examplemodel"
+                            "dummy_plugin.view_dummymodel"
                         ],
                         buttons=(
                             NavMenuAddButton(
-                                link="plugins:example_plugin:examplemodel_add",
+                                link="plugins:dummy_plugin:dummymodel_add",
                                 permissions=[
-                                    "example_plugin.add_examplemodel",
+                                    "dummy_plugin.add_dummymodel",
                                 ],
                             ),
                             NavMenuImportButton(
-                                link="plugins:example_plugin:examplemodel_import",
+                                link="plugins:dummy_plugin:dummymodel_import",
                                 permissions=[
-                                    "example_plugin.add_examplemodel"
+                                    "dummy_plugin.add_dummymodel"
                                 ],
                             ),
                         ),
@@ -121,10 +121,10 @@ A `NavMenuGroup` has the following attributes:
 A `NavMenuItem` has the following attributes:
 
 * `link` - The name of the URL path to which this menu item links
-* `link_text` - The text presented to the user
+* `name` - The text presented to the user
 * `weight` - Defines the position the object should be displayed at (optional)
 * `permissions` - A list of permissions required to display this link (optional)
-* `buttons` - An iterable of NavMenuButton instances to display (optional)
+* `buttons` - An iterable of NavMenuButton (or subclasses of NavMenuButton) instances to display (optional)
 
 !!! note
     Any buttons associated within a menu item will be hidden if the user does not have permission to access the menu item, regardless of what permissions are set on the buttons.
@@ -137,3 +137,7 @@ A `NavMenuButton` has the following attributes:
 * `icon_class` - Button icon CSS classes (Nautobot currently supports [Material Design Icons](https://materialdesignicons.com) or one of the choices provided by `ButtonActionIconChoices`)
 * `button_class` - One of the choices provided by `ButtonActionColorChoices` (optional)
 * `permissions` - A list of permissions required to display this button (optional)
+
+
+!!! note
+    `NavMenuAddButton` and `NavMenuImportButton` are subclasses of `NavMenuButton` that can be used to provide the commonly used "Add" and "Import" buttons.
