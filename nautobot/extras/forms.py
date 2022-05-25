@@ -1,11 +1,11 @@
 from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.db.models.fields import TextField
-from django.forms import inlineformset_factory
+from django.forms import ModelMultipleChoiceField, inlineformset_factory
 from django.urls.base import reverse
-from django.core.validators import ValidationError
 from django.utils.safestring import mark_safe
 
 from nautobot.dcim.models import DeviceRole, DeviceType, Platform, Region, Site
@@ -18,6 +18,7 @@ from nautobot.utilities.forms import (
     BulkEditForm,
     BulkEditNullBooleanSelect,
     ColorSelect,
+    CSVContentTypeField,
     CSVModelChoiceField,
     CSVModelForm,
     CSVMultipleChoiceField,
@@ -51,6 +52,7 @@ from .models import (
     CustomField,
     CustomFieldChoice,
     CustomLink,
+    DynamicGroup,
     ExportTemplate,
     GitRepository,
     GraphQLQuery,
@@ -69,7 +71,7 @@ from .models import (
     Webhook,
 )
 from .registry import registry
-from .utils import FeatureQuery
+from .utils import FeatureQuery, TaggableClassesQuery
 
 
 #
@@ -294,15 +296,12 @@ class ComputedFieldForm(BootstrapMixin, forms.ModelForm):
             "weight",
             "advanced_ui",
         )
-        widgets = {
-            "label": forms.TextInput(attrs={"autofocus": True, "placeholder": "Label"}),
-        }
 
 
 class ComputedFieldFilterForm(BootstrapMixin, forms.Form):
     model = ComputedField
     q = forms.CharField(required=False, label="Search")
-    content_type = forms.ModelChoiceField(
+    content_type = CSVContentTypeField(
         queryset=ContentType.objects.filter(FeatureQuery("custom_fields").get_query()).order_by("app_label", "model"),
         required=False,
         label="Content Type",
@@ -324,7 +323,7 @@ class ConfigContextForm(BootstrapMixin, forms.ModelForm):
     clusters = DynamicModelMultipleChoiceField(queryset=Cluster.objects.all(), required=False)
     tenant_groups = DynamicModelMultipleChoiceField(queryset=TenantGroup.objects.all(), required=False)
     tenants = DynamicModelMultipleChoiceField(queryset=Tenant.objects.all(), required=False)
-    tags = DynamicModelMultipleChoiceField(queryset=Tag.objects.all(), required=False)
+
     data = JSONField(label="")
 
     class Meta:
@@ -347,9 +346,6 @@ class ConfigContextForm(BootstrapMixin, forms.ModelForm):
             "tags",
             "data",
         )
-        widgets = {
-            "name": forms.TextInput(attrs={"autofocus": True, "placeholder": "Name"}),
-        }
 
 
 class ConfigContextBulkEditForm(BootstrapMixin, BulkEditForm):
@@ -439,9 +435,6 @@ class ConfigContextSchemaForm(BootstrapMixin, forms.ModelForm):
             "description",
             "data_schema",
         )
-        widgets = {
-            "name": forms.TextInput(attrs={"autofocus": True, "placeholder": "Name"}),
-        }
 
 
 class ConfigContextSchemaBulkEditForm(BootstrapMixin, BulkEditForm):
@@ -510,9 +503,6 @@ class CustomFieldForm(BootstrapMixin, forms.ModelForm):
             "validation_maximum",
             "validation_regex",
         )
-        widgets = {
-            "name": forms.TextInput(attrs={"autofocus": True, "placeholder": "Slug"}),
-        }
 
 
 class CustomFieldModelForm(forms.ModelForm):
@@ -604,13 +594,30 @@ class CustomFieldFilterForm(forms.Form):
 
         super().__init__(*args, **kwargs)
 
-        # Add all applicable CustomFields to the form
         custom_fields = CustomField.objects.filter(content_types=self.obj_type).exclude(
             filter_logic=CustomFieldFilterLogicChoices.FILTER_DISABLED
         )
         for cf in custom_fields:
             field_name = "cf_{}".format(cf.name)
-            self.fields[field_name] = cf.to_form_field(set_initial=True, enforce_required=False)
+            if cf.type == "json":
+                self.fields[field_name] = cf.to_form_field(
+                    set_initial=True, enforce_required=False, simple_json_filter=True
+                )
+            else:
+                self.fields[field_name] = cf.to_form_field(set_initial=True, enforce_required=False)
+
+
+#
+# Nautobot base form for use in most new custom model forms.
+#
+
+
+class NautobotModelForm(BootstrapMixin, CustomFieldModelForm, RelationshipModelForm):
+    """
+    This class exists to combine common functionality and is used to inherit from throughout the
+    codebase where all three of BootstrapMixin, CustomFieldModelForm and RelationshipModelForm are
+    needed.
+    """
 
 
 #
@@ -636,19 +643,48 @@ class CustomLinkForm(BootstrapMixin, forms.ModelForm):
             "button_class",
             "new_window",
         )
-        widgets = {
-            "name": forms.TextInput(attrs={"autofocus": True, "placeholder": "Name"}),
-        }
 
 
 class CustomLinkFilterForm(BootstrapMixin, forms.Form):
     model = CustomLink
     q = forms.CharField(required=False, label="Search")
-    content_type = forms.ModelChoiceField(
+    content_type = CSVContentTypeField(
         queryset=ContentType.objects.filter(FeatureQuery("custom_links").get_query()).order_by("app_label", "model"),
         required=False,
         label="Content Type",
     )
+
+
+#
+# Dynamic Groups
+#
+
+
+class DynamicGroupForm(NautobotModelForm):
+    """DynamicGroup model form."""
+
+    slug = SlugField()
+    content_type = forms.ModelChoiceField(
+        queryset=ContentType.objects.filter(FeatureQuery("dynamic_groups").get_query()).order_by("app_label", "model"),
+        label="Content Type",
+    )
+
+    class Meta:
+        model = DynamicGroup
+        fields = [
+            "name",
+            "slug",
+            "description",
+            "content_type",
+        ]
+
+
+class DynamicGroupFilterForm(BootstrapMixin, forms.Form):
+    """DynamicGroup filter form."""
+
+    model = DynamicGroup
+    q = forms.CharField(required=False, label="Search")
+    content_type = MultipleContentTypeField(feature="dynamic_groups", choices_as_strings=True, label="Content Type")
 
 
 #
@@ -674,15 +710,12 @@ class ExportTemplateForm(BootstrapMixin, forms.ModelForm):
             "mime_type",
             "file_extension",
         )
-        widgets = {
-            "name": forms.TextInput(attrs={"autofocus": True, "placeholder": "Name"}),
-        }
 
 
 class ExportTemplateFilterForm(BootstrapMixin, forms.Form):
     model = ExportTemplate
     q = forms.CharField(required=False, label="Search")
-    content_type = forms.ModelChoiceField(
+    content_type = CSVContentTypeField(
         queryset=ContentType.objects.filter(FeatureQuery("export_templates").get_query()).order_by(
             "app_label", "model"
         ),
@@ -698,15 +731,6 @@ class ExportTemplateFilterForm(BootstrapMixin, forms.Form):
 
 def get_git_datasource_content_choices():
     return get_datasource_content_choices("extras.gitrepository")
-
-
-class NautobotModelForm(BootstrapMixin, CustomFieldModelForm, RelationshipModelForm):
-    """
-    This class exists to combine common functionality and is used to inherit from throughout
-    the codebase where all three of BootstrapMixin, CustomFieldModelForm and RelationshipModelForm are needed.
-    """
-
-    pass
 
 
 class PasswordInputWithPlaceholder(forms.PasswordInput):
@@ -755,8 +779,6 @@ class GitRepositoryForm(BootstrapMixin, RelationshipModelForm):
         choices=get_git_datasource_content_choices,
     )
 
-    tags = DynamicModelMultipleChoiceField(queryset=Tag.objects.all(), required=False)
-
     class Meta:
         model = GitRepository
         fields = [
@@ -770,9 +792,6 @@ class GitRepositoryForm(BootstrapMixin, RelationshipModelForm):
             "provided_contents",
             "tags",
         ]
-        widgets = {
-            "name": forms.TextInput(attrs={"autofocus": True, "placeholder": "Name"}),
-        }
 
     def clean(self):
         super().clean()
@@ -853,9 +872,6 @@ class GraphQLQueryForm(BootstrapMixin, forms.ModelForm):
             "slug",
             "query",
         )
-        widgets = {
-            "name": forms.TextInput(attrs={"autofocus": True, "placeholder": "Name"}),
-        }
 
     def get_action_url(self):
         return reverse("extras:graphqlquery_add")
@@ -915,8 +931,6 @@ class JobForm(BootstrapMixin, forms.Form):
 
 class JobEditForm(NautobotModelForm):
     slug = SlugField()
-
-    tags = DynamicModelMultipleChoiceField(queryset=Tag.objects.all(), required=False)
 
     class Meta:
         model = Job
@@ -1025,6 +1039,13 @@ class JobScheduleForm(BootstrapMixin, forms.Form):
 class JobResultFilterForm(BootstrapMixin, forms.Form):
     model = JobResult
     q = forms.CharField(required=False, label="Search")
+    job_model = DynamicModelMultipleChoiceField(
+        label="Job",
+        queryset=Job.objects.all(),
+        required=False,
+        to_field_name="slug",
+        widget=APISelectMultiple(api_url="/api/extras/jobs/", api_version="1.3"),
+    )
     # FIXME(glenn) Filtering by obj_type?
     name = forms.CharField(required=False)
     user = DynamicModelMultipleChoiceField(
@@ -1046,6 +1067,13 @@ class ScheduledJobFilterForm(BootstrapMixin, forms.Form):
     model = ScheduledJob
     q = forms.CharField(required=False, label="Search")
     name = forms.CharField(required=False)
+    job_model = DynamicModelMultipleChoiceField(
+        label="Job",
+        queryset=Job.objects.all(),
+        required=False,
+        to_field_name="slug",
+        widget=APISelectMultiple(api_url="/api/extras/job-models/"),
+    )
     total_run_count = forms.IntegerField(required=False)
 
 
@@ -1057,8 +1085,8 @@ class ScheduledJobFilterForm(BootstrapMixin, forms.Form):
 class ObjectChangeFilterForm(BootstrapMixin, forms.Form):
     model = ObjectChange
     q = forms.CharField(required=False, label="Search")
-    time_after = forms.DateTimeField(label="After", required=False, widget=DateTimePicker())
-    time_before = forms.DateTimeField(label="Before", required=False, widget=DateTimePicker())
+    time__gte = forms.DateTimeField(label="After", required=False, widget=DateTimePicker())
+    time__lte = forms.DateTimeField(label="Before", required=False, widget=DateTimePicker())
     action = forms.ChoiceField(
         choices=add_blank_choice(ObjectChangeActionChoices),
         required=False,
@@ -1126,9 +1154,6 @@ class RelationshipForm(BootstrapMixin, forms.ModelForm):
             "destination_hidden",
             "destination_filter",
         ]
-        widgets = {
-            "name": forms.TextInput(attrs={"autofocus": True, "placeholder": "Name"}),
-        }
 
     def save(self, commit=True):
 
@@ -1188,8 +1213,6 @@ class SecretForm(NautobotModelForm):
 
     parameters = JSONField(help_text='Enter parameters in <a href="https://json.org/">JSON</a> format.')
 
-    tags = DynamicModelMultipleChoiceField(queryset=Tag.objects.all(), required=False)
-
     class Meta:
         model = Secret
         fields = [
@@ -1200,9 +1223,6 @@ class SecretForm(NautobotModelForm):
             "parameters",
             "tags",
         ]
-        widgets = {
-            "name": forms.TextInput(attrs={"autofocus": True, "placeholder": "Name"}),
-        }
 
 
 class SecretCSVForm(CustomFieldModelCSVForm):
@@ -1250,9 +1270,6 @@ class SecretsGroupForm(NautobotModelForm):
             "slug",
             "description",
         ]
-        widgets = {
-            "name": forms.TextInput(attrs={"autofocus": True, "placeholder": "Name"}),
-        }
 
 
 class SecretsGroupFilterForm(BootstrapMixin, CustomFieldFilterForm):
@@ -1273,10 +1290,7 @@ class StatusForm(NautobotModelForm):
 
     class Meta:
         model = Status
-        widgets = {
-            "name": forms.TextInput(attrs={"autofocus": True, "placeholder": "Name"}),
-            "color": ColorSelect(),
-        }
+        widgets = {"color": ColorSelect()}
         fields = ["name", "slug", "description", "content_types", "color"]
 
 
@@ -1370,13 +1384,27 @@ class StatusModelCSVFormMixin(CSVModelForm):
 
 class TagForm(NautobotModelForm):
     slug = SlugField()
+    content_types = ModelMultipleChoiceField(
+        label="Content Type(s)",
+        queryset=TaggableClassesQuery().as_queryset,
+    )
 
     class Meta:
         model = Tag
-        fields = ["name", "slug", "color", "description"]
-        widgets = {
-            "name": forms.TextInput(attrs={"autofocus": True, "placeholder": "Name"}),
-        }
+        fields = ["name", "slug", "color", "description", "content_types"]
+
+    def clean(self):
+        data = super().clean()
+
+        if self.instance.present_in_database:
+            # check if tag is assigned to any of the removed content_types
+            content_types_id = [content_type.id for content_type in self.cleaned_data["content_types"]]
+            errors = self.instance.validate_content_types_removal(content_types_id)
+
+            if errors:
+                raise ValidationError(errors)
+
+        return data
 
 
 class TagCSVForm(CustomFieldModelCSVForm):
@@ -1402,6 +1430,12 @@ class AddRemoveTagsForm(forms.Form):
 class TagFilterForm(BootstrapMixin, CustomFieldFilterForm):
     model = Tag
     q = forms.CharField(required=False, label="Search")
+    content_types = MultipleContentTypeField(
+        choices_as_strings=True,
+        required=False,
+        label="Content Type(s)",
+        queryset=TaggableClassesQuery().as_queryset,
+    )
 
 
 class TagBulkEditForm(BootstrapMixin, CustomFieldBulkEditForm):
@@ -1439,9 +1473,23 @@ class WebhookForm(BootstrapMixin, forms.ModelForm):
             "ssl_verification",
             "ca_file_path",
         )
-        widgets = {
-            "name": forms.TextInput(attrs={"autofocus": True, "placeholder": "Name"}),
-        }
+
+    def clean(self):
+        data = super().clean()
+
+        conflicts = Webhook.check_for_conflicts(
+            instance=self.instance,
+            content_types=self.cleaned_data.get("content_types"),
+            payload_url=self.cleaned_data.get("payload_url"),
+            type_create=self.cleaned_data.get("type_create"),
+            type_update=self.cleaned_data.get("type_update"),
+            type_delete=self.cleaned_data.get("type_delete"),
+        )
+
+        if conflicts:
+            raise ValidationError(conflicts)
+
+        return data
 
 
 class WebhookFilterForm(BootstrapMixin, forms.Form):

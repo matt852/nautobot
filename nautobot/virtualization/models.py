@@ -206,6 +206,7 @@ class Cluster(PrimaryModel):
     "custom_fields",
     "custom_links",
     "custom_validators",
+    "dynamic_groups",
     "export_templates",
     "graphql",
     "relationships",
@@ -236,7 +237,7 @@ class VirtualMachine(PrimaryModel, ConfigContextModel, StatusModel):
         blank=True,
         null=True,
     )
-    name = models.CharField(max_length=64)
+    name = models.CharField(max_length=64, db_index=True)
     role = models.ForeignKey(
         to="dcim.DeviceRole",
         on_delete=models.PROTECT,
@@ -290,6 +291,15 @@ class VirtualMachine(PrimaryModel, ConfigContextModel, StatusModel):
         "memory",
         "disk",
     ]
+    # 2.0 TODO: Make this go away when we assert filterset/filterform parity. FilterSet fields that
+    # are custom on FilterForm that we don't want in DynamicGroup UI edit form because they are
+    # already there.
+    #
+    # This mapping is in the form of:
+    #   {missing_form_field_name}: {filterset_field_name_that_duplicates_it}
+    dynamic_group_filter_fields = {
+        "cluster": "cluster_id",
+    }
 
     class Meta:
         ordering = ("name",)  # Name may be non-unique
@@ -374,6 +384,7 @@ class VirtualMachine(PrimaryModel, ConfigContextModel, StatusModel):
     "export_templates",
     "graphql",
     "relationships",
+    "statuses",
     "webhooks",
 )
 class VMInterface(BaseModel, BaseInterface, CustomFieldModel):
@@ -382,12 +393,9 @@ class VMInterface(BaseModel, BaseInterface, CustomFieldModel):
         on_delete=models.CASCADE,
         related_name="interfaces",
     )
-    name = models.CharField(max_length=64)
+    name = models.CharField(max_length=64, db_index=True)
     _name = NaturalOrderingField(
-        target_field="name",
-        naturalize_function=naturalize_interface,
-        max_length=100,
-        blank=True,
+        target_field="name", naturalize_function=naturalize_interface, max_length=100, blank=True, db_index=True
     )
     description = models.CharField(max_length=200, blank=True)
     untagged_vlan = models.ForeignKey(
@@ -420,6 +428,7 @@ class VMInterface(BaseModel, BaseInterface, CustomFieldModel):
         "mtu",
         "description",
         "mode",
+        "status",
     ]
 
     class Meta:
@@ -442,6 +451,7 @@ class VMInterface(BaseModel, BaseInterface, CustomFieldModel):
             self.mtu,
             self.description,
             self.get_mode_display(),
+            self.get_status_display(),
         )
 
     def clean(self):

@@ -1,9 +1,5 @@
-import inspect
-
 import django_tables2 as tables
-
 from django.conf import settings
-from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django_tables2.utils import Accessor
@@ -22,13 +18,13 @@ from nautobot.utilities.tables import (
 )
 from nautobot.utilities.templatetags.helpers import render_boolean, render_markdown
 from .choices import LogLevelChoices
-from .jobs import Job as JobClass
 from .models import (
     ComputedField,
     ConfigContext,
     ConfigContextSchema,
     CustomField,
     CustomLink,
+    DynamicGroup,
     ExportTemplate,
     GitRepository,
     GraphQLQuery,
@@ -94,19 +90,19 @@ WEBHOOK_CONTENT_TYPES = """
 
 SCHEDULED_JOB_APPROVAL_QUEUE_BUTTONS = """
 <button type="button"
-        onClick="handleDetailPostAction('{% url 'extras:scheduledjob_approval_request_view' scheduled_job=record.pk %}', '_dry_run')"
+        onClick="handleDetailPostAction('{% url 'extras:scheduledjob_approval_request_view' pk=record.pk %}', '_dry_run')"
         title="Dry Run"
         class="btn btn-primary btn-xs"{% if not perms.extras.run_job %} disabled="disabled"{% endif %}>
     <i class="mdi mdi-play"></i>
 </button>
 <button type="button"
-        onClick="handleDetailPostAction('{% url 'extras:scheduledjob_approval_request_view' scheduled_job=record.pk %}', '_approve')"
+        onClick="handleDetailPostAction('{% url 'extras:scheduledjob_approval_request_view' pk=record.pk %}', '_approve')"
         title="Approve"
         class="btn btn-success btn-xs"{% if not perms.extras.run_job %} disabled="disabled"{% endif %}>
     <i class="mdi mdi-check"></i>
 </button>
 <button type="button"
-        onClick="handleDetailPostAction('{% url 'extras:scheduledjob_approval_request_view' scheduled_job=record.pk %}', '_deny')"
+        onClick="handleDetailPostAction('{% url 'extras:scheduledjob_approval_request_view' pk=record.pk %}', '_deny')"
         title="Deny"
         class="btn btn-danger btn-xs"{% if not perms.extras.run_job %} disabled="disabled"{% endif %}>
     <i class="mdi mdi-close"></i>
@@ -265,6 +261,34 @@ class CustomLinkTable(BaseTable):
             "group_name",
             "weight",
         )
+
+
+class DynamicGroupTable(BaseTable):
+
+    pk = ToggleColumn()
+    name = tables.Column(linkify=True)
+    members = tables.Column(accessor="count", verbose_name="Group Members", orderable=False)
+    actions = ButtonsColumn(DynamicGroup, pk_field="slug")
+
+    class Meta(BaseTable.Meta):  # pylint: disable=too-few-public-methods
+        """Resource Manager Meta."""
+
+        model = DynamicGroup
+        fields = (
+            "pk",
+            "name",
+            "description",
+            "content_type",
+            "members",
+            "actions",
+        )
+
+    def render_members(self, value, record):
+        """Provide a filtered URL to the group members (if any)."""
+        # Only linkify if there are members.
+        if not value:
+            return value
+        return format_html('<a href="{}">{}</a>', record.get_group_members_url(), value)
 
 
 class ExportTemplateTable(BaseTable):
@@ -494,22 +518,9 @@ class JobLogEntryTable(BaseTable):
         }
 
 
-def job_creator_link(value, record):
-    """
-    Get a link to the related object, if any, associated with the given JobResult record.
-    """
-    related_object = record.related_object
-    if inspect.isclass(related_object) and issubclass(related_object, JobClass):
-        return reverse("extras:job", kwargs={"class_path": related_object.class_path})
-    elif related_object:
-        return related_object.get_absolute_url()
-    return None
-
-
 class JobResultTable(BaseTable):
     pk = ToggleColumn()
-    obj_type = tables.Column(verbose_name="Object Type", accessor="obj_type.name")
-    related_object = tables.Column(verbose_name="Related Object", linkify=job_creator_link, accessor="related_name")
+    linked_record = tables.Column(verbose_name="Job / Git Repository", linkify=True)
     name = tables.Column()
     created = tables.DateTimeColumn(linkify=True, format=settings.SHORT_DATETIME_FORMAT)
     status = tables.TemplateColumn(
@@ -522,11 +533,20 @@ class JobResultTable(BaseTable):
         attrs={"td": {"class": "text-nowrap report-stats"}},
     )
 
+    def order_linked_record(self, queryset, is_descending):
+        return (
+            queryset.order_by(
+                ("-" if is_descending else "") + "job_model__name",
+                ("-" if is_descending else "") + "name",
+            ),
+            True,
+        )
+
     def render_summary(self, record):
         """
         Define custom rendering for the summary column.
         """
-        log_objects = JobLogEntry.objects.filter(job_result__pk=record.pk)
+        log_objects = record.logs.all()
         success = log_objects.filter(log_level=LogLevelChoices.LOG_SUCCESS).count()
         info = log_objects.filter(log_level=LogLevelChoices.LOG_INFO).count()
         warning = log_objects.filter(log_level=LogLevelChoices.LOG_WARNING).count()
@@ -548,15 +568,14 @@ class JobResultTable(BaseTable):
             "pk",
             "created",
             "name",
-            "obj_type",
-            "related_object",
+            "linked_record",
             "duration",
             "completed",
             "user",
             "status",
             "summary",
         )
-        default_columns = ("pk", "created", "related_object", "user", "status", "summary")
+        default_columns = ("pk", "created", "name", "linked_record", "user", "status", "summary")
 
 
 #
@@ -567,7 +586,7 @@ class JobResultTable(BaseTable):
 class ScheduledJobTable(BaseTable):
     pk = ToggleColumn()
     name = tables.LinkColumn()
-    job_class = tables.Column(verbose_name="Job")
+    job_model = tables.Column(verbose_name="Job", linkify=True)
     interval = tables.Column(verbose_name="Execution Type")
     start_time = tables.Column(verbose_name="First Run")
     last_run_at = tables.Column(verbose_name="Most Recent Run")
@@ -575,12 +594,12 @@ class ScheduledJobTable(BaseTable):
 
     class Meta(BaseTable.Meta):
         model = ScheduledJob
-        fields = ("pk", "name", "job_class", "interval", "start_time", "last_run_at")
+        fields = ("pk", "name", "job_model", "interval", "start_time", "last_run_at")
 
 
 class ScheduledJobApprovalQueueTable(BaseTable):
     name = tables.LinkColumn(viewname="extras:scheduledjob_approval_request_view", args=[tables.A("pk")])
-    job_class = tables.Column(verbose_name="Job")
+    job_model = tables.Column(verbose_name="Job", linkify=True)
     interval = tables.Column(verbose_name="Execution Type")
     start_time = tables.Column(verbose_name="Requested")
     user = tables.Column(verbose_name="Requestor")
@@ -588,7 +607,7 @@ class ScheduledJobApprovalQueueTable(BaseTable):
 
     class Meta(BaseTable.Meta):
         model = ScheduledJob
-        fields = ("name", "job_class", "interval", "user", "start_time", "actions")
+        fields = ("name", "job_model", "interval", "user", "start_time", "actions")
 
 
 class ObjectChangeTable(BaseTable):
@@ -637,10 +656,10 @@ class RelationshipAssociationTable(BaseTable):
     actions = ButtonsColumn(RelationshipAssociation, buttons=("delete",))
 
     source_type = tables.Column()
-    source = tables.Column(linkify=True, orderable=False)
+    source = tables.Column(linkify=True, orderable=False, accessor="get_source")
 
     destination_type = tables.Column()
-    destination = tables.Column(linkify=True, orderable=False)
+    destination = tables.Column(linkify=True, orderable=False, accessor="get_destination")
 
     class Meta(BaseTable.Meta):
         model = RelationshipAssociation
@@ -730,11 +749,12 @@ class TagTable(BaseTable):
     pk = ToggleColumn()
     name = tables.LinkColumn(viewname="extras:tag", args=[Accessor("slug")])
     color = ColorColumn()
+    content_types = ContentTypesColumn(truncate_words=15)
     actions = ButtonsColumn(Tag, pk_field="slug")
 
     class Meta(BaseTable.Meta):
         model = Tag
-        fields = ("pk", "name", "items", "slug", "color", "description", "actions")
+        fields = ("pk", "name", "items", "slug", "color", "content_types", "description", "actions")
 
 
 class TaggedItemTable(BaseTable):
