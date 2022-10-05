@@ -15,8 +15,8 @@
                     <table class="table theme-table">
                         <thead>
                             <tr>
-                                <th scope="col" class="text-center">Light</th>
-                                <th scope="col" class="text-center">Dark</th>
+                                <th scope="col" class="text-center">Default - Light</th>
+                                <th scope="col" class="text-center">Default - Dark</th>
                                 <th scope="col" class="text-center">System</th>
                             </tr>
                         </thead>
@@ -25,6 +25,12 @@
                                 <td id="td-light-theme"><a href="#" onclick="toggleTheme('light');" id="btn-light-theme"><img src="{% static 'img/light-theme.png' %}" id="img-light-theme" alt="Light" height="170" width="232" class="img-responsive" /></a></td>
                                 <td id="td-dark-theme"><a href="#" onclick="toggleTheme('dark');" id="btn-dark-theme"><img src="{% static 'img/dark-theme.png' %}" id="img-dark-theme" alt="Dark" height="170" width="232" class="img-responsive" /></a></td>
                                 <td id="td-system-theme"><a href="#" onclick="toggleTheme('system');" id="btn-system-theme"><img src="{% static 'img/system-theme.png' %}" id="img-system-theme" alt="Toggle" height="170" width="232" class="img-responsive" /></a></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">Black</td>
+                            </tr>
+                            <tr>
+                                <td id="td-black-theme"><a href="#" onclick="toggleTheme('black');" id="btn-black-theme"><img src="{% static 'img/light-theme.png' %}" id="img-black-theme" alt="Black" height="170" width="232" class="img-responsive" /></a></td>
                             </tr>
                         </tbody>
                     </table>

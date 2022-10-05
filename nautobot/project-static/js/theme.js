@@ -6,6 +6,7 @@ const tdSystemTheme = document.getElementById('td-system-theme');
 
 // CSS file in base.html
 var darkElement = document.getElementById("dark-theme");
+var blackElement = document.getElementById("black-theme");
 
 // CurrentTheme overrides auto-detection when specified by manually clicking theme button
 if (currentTheme && currentTheme != "system") {
@@ -87,6 +88,12 @@ function setLightTheme() {
     htmlEl.dataset.theme = "light";
     darkElement.disabled = "disabled";
 }
+
+function setBlackTheme() {
+    htmlEl.dataset.theme = "black";
+    darkElement.disabled = "disabled";
+}
+
 
 /* Highlights the active selection in the theme-selection modal */
 function setLightThemeActive() {
