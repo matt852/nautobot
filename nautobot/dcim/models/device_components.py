@@ -533,6 +533,12 @@ class BaseInterface(RelationshipModel, StatusModel):
         if self.present_in_database and self.mode != InterfaceModeChoices.MODE_TAGGED:
             self.tagged_vlans.clear()
 
+        # Validate InterfaceType field if configured
+        if self.type:
+            # Cannot have a custom Interface Type defined
+            if self.type not in [val for name, val in vars(InterfaceTypeChoices).items() if not name.startswith("__")]:
+                raise ValidationError({"type": "Interface Type must use a valid pre-defined type."})
+
         return super().save(*args, **kwargs)
 
 
