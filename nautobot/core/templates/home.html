@@ -31,15 +31,16 @@
                             <div class="panel-heading">
                                 <strong>{{ panel_name }}</strong>
                                 <div style="float: right">
-                                    <button type="button" class="btn btn-xs btn-secondary glyphicon glyphicon-minus" data-toggle="collapse" data-target="#{{ panel_name.split|join:'_' }}_content" aria-pressed="false" id="{{ panel_name.split|join:'_' }}_btn" onclick="toggleHomepagePanel(this)"></button>
+                                    <button type="button" class="btn btn-xs btn-success glyphicon glyphicon-minus" data-toggle="collapse" data-target="#{{ panel_name.split|join:'_' }}_content" aria-pressed="false" id="{{ panel_name.split|join:'_' }}_btn" onclick="toggleHomepagePanel(this)"></button>
                                 </div>
                             </div>
+                            <!-- <div id="{{ panel_name.split|join:'_' }}_content" {% if request.COOKIES|get_item:"{{ panel_name.split|join:'_' }}_homepage_collapse" == "True" %}class="list-group collapse"{% else %}class="list-group collapse in"{% endif %}> -->
                             <div class="list-group collapse in" id="{{ panel_name.split|join:'_' }}_content">
                                 {% if panel_details.rendered_html %}
                                     {% autoescape off %}{{ panel_details.rendered_html }}{% endautoescape %}
                                 {% elif panel_details.items %}
                                     {% for item_name, item_details in panel_details.items.items %}
-                                        {% if  item_details.rendered_html %}
+                                        {% if item_details.rendered_html %}
                                             <div class="list-group-item" data-item-weight="{{ item_details.weight }}">
                                                 {% if request.user|has_one_or_more_perms:item_details.permissions or not "HIDE_RESTRICTED_UI"|settings_or_config %}
                                                     {% autoescape off %}{{ item_details.rendered_html }}{% endautoescape %}
