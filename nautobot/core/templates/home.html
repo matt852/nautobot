@@ -28,8 +28,11 @@
                         <div class="panel panel-default" style="break-inside: avoid" data-panel-weight="{{ panel_details.weight }}">
                             <div class="panel-heading">
                                 <strong>{{ panel_name }}</strong>
+                                <div style="float: right">
+                                    <button type="button" class="btn btn-xs btn-secondary glyphicon glyphicon-minus" data-toggle="collapse" data-target="#{{ panel_name.split|join:'_' }}_content_panel" aria-pressed="false" autocomplete="off"></button>
+                                </div>
                             </div>
-                            <div class="list-group">
+                            <div class="list-group collapse in"  id="{{ panel_name.split|join:'_' }}_content_panel">
                                 {% if  panel_details.rendered_html %}
                                     {% autoescape off %}{{ panel_details.rendered_html }}{% endautoescape %}
                                 {% elif panel_details.items %}
