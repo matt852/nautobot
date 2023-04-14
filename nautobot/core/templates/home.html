@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load helpers %}
+{% load static %}
 {% load registry %}
 
 {% block header %}
@@ -12,6 +13,7 @@
             <a href="https://docs.nautobot.com/projects/core/en/v{{ new_release.version }}/installation/upgrading/">Upgrade instructions</a>
         </div>
     {% endif %}
+    <script src="{% static 'js/homepage.js' %}" onerror="window.location='{% url 'media_failure' %}?filename=js/theme.js'"></script>
 {% endblock %}
 
 
@@ -29,11 +31,11 @@
                             <div class="panel-heading">
                                 <strong>{{ panel_name }}</strong>
                                 <div style="float: right">
-                                    <button type="button" class="btn btn-xs btn-secondary glyphicon glyphicon-minus" data-toggle="collapse" data-target="#{{ panel_name.split|join:'_' }}_content_panel" aria-pressed="false" autocomplete="off"></button>
+                                    <button type="button" class="btn btn-xs btn-secondary glyphicon glyphicon-minus" data-toggle="collapse" data-target="#{{ panel_name.split|join:'_' }}_content" aria-pressed="false" id="{{ panel_name.split|join:'_' }}_btn" onclick="toggleHomepagePanel(this)"></button>
                                 </div>
                             </div>
-                            <div class="list-group collapse in"  id="{{ panel_name.split|join:'_' }}_content_panel">
-                                {% if  panel_details.rendered_html %}
+                            <div class="list-group collapse in" id="{{ panel_name.split|join:'_' }}_content">
+                                {% if panel_details.rendered_html %}
                                     {% autoescape off %}{{ panel_details.rendered_html }}{% endautoescape %}
                                 {% elif panel_details.items %}
                                     {% for item_name, item_details in panel_details.items.items %}
